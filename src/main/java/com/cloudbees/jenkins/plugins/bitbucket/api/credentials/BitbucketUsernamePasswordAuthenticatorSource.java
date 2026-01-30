@@ -35,7 +35,6 @@ import jenkins.authentication.tokens.api.AuthenticationTokenSource;
  */
 @Extension
 public class BitbucketUsernamePasswordAuthenticatorSource extends AuthenticationTokenSource<BitbucketUsernamePasswordAuthenticator, StandardUsernamePasswordCredentials> {
-
     /**
      * Constructor.
      */
@@ -51,6 +50,11 @@ public class BitbucketUsernamePasswordAuthenticatorSource extends Authentication
     @NonNull
     @Override
     public BitbucketUsernamePasswordAuthenticator convert(@NonNull StandardUsernamePasswordCredentials standardUsernamePasswordCredentials) {
+        String username = standardUsernamePasswordCredentials.getUsername();
+        if (username != null && username.startsWith(BitbucketAccessTokenAuthenticator.API_TOKEN_PREFIX)) {
+            return new BitbucketAccessTokenAuthenticator(standardUsernamePasswordCredentials);
+        }
+
         return new BitbucketUsernamePasswordAuthenticator(standardUsernamePasswordCredentials);
     }
 }
