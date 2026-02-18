@@ -30,31 +30,25 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import jenkins.authentication.tokens.api.AuthenticationTokenSource;
 
-/**
- * Source for username/password authenticators.
- */
+/** Source for username/password authenticators. */
 @Extension
 public class BitbucketUsernamePasswordAuthenticatorSource extends AuthenticationTokenSource<BitbucketUsernamePasswordAuthenticator, StandardUsernamePasswordCredentials> {
-    /**
-     * Constructor.
-     */
+    
     public BitbucketUsernamePasswordAuthenticatorSource() {
         super(BitbucketUsernamePasswordAuthenticator.class, StandardUsernamePasswordCredentials.class);
     }
 
-    /**
-     * Converts username/password credentials to an authenticator.
-     * @param standardUsernamePasswordCredentials the username/password combo
-     * @return an authenticator that will use them.
-     */
     @NonNull
     @Override
-    public BitbucketUsernamePasswordAuthenticator convert(@NonNull StandardUsernamePasswordCredentials standardUsernamePasswordCredentials) {
-        String username = standardUsernamePasswordCredentials.getUsername();
-        if (username != null && username.startsWith(BitbucketAccessTokenAuthenticator.API_TOKEN_PREFIX)) {
-            return new BitbucketAccessTokenAuthenticator(standardUsernamePasswordCredentials);
+    public BitbucketUsernamePasswordAuthenticator convert(@NonNull StandardUsernamePasswordCredentials credentials) {
+        if (BitbucketAccessTokenAuthenticator.isAccessToken(credentials)) {
+            return new BitbucketAccessTokenAuthenticator(credentials);
         }
 
-        return new BitbucketUsernamePasswordAuthenticator(standardUsernamePasswordCredentials);
+        if (BitbucketAPITokenAuthenticator.isAPIToken(credentials)) {
+            return new BitbucketAPITokenAuthenticator(credentials);
+        }
+
+        return new BitbucketUsernamePasswordAuthenticator(credentials);
     }
 }
