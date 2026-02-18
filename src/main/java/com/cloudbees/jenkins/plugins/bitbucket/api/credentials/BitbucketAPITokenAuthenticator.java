@@ -25,50 +25,33 @@
 package com.cloudbees.jenkins.plugins.bitbucket.api.credentials;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import hudson.util.Secret;
-import org.apache.http.HttpRequest;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.HttpHost;
 
 /**
- * Authenticator that uses an OAuth access token with Bearer authentication.
- * The username must be set to "{@value #TOKEN_USERNAME}" and the token is provided as the password.
- * The token is sent using Bearer authorization header.
+ * Authenticator that uses an API token with HTTP Basic authentication.
+ * The username format is "{@value #API_TOKEN_PREFIX}actual_username".
+ * The token is provided as the password and uses standard Basic Auth.
  */
-public class BitbucketAccessTokenAuthenticator extends BitbucketUsernamePasswordAuthenticator {
-    /** Username that identifies access token credentials */
-    public static final String TOKEN_USERNAME = "x-token-auth";
-
-    private final Secret token;
+public class BitbucketAPITokenAuthenticator extends BitbucketUsernamePasswordAuthenticator {
+    /** Prefix for API token credentials */
+    public static final String API_TOKEN_PREFIX = "API_TOKEN/";
 
     /**
-     * Tests if the credentials use access token authentication.
+     * Tests if the credentials have an API token prefix.
      * 
      * @param credentials the credentials to test
-     * @return true if username equals TOKEN_USERNAME, false otherwise
+     * @return true if username starts with API_TOKEN_PREFIX, false otherwise
      */
-    public static boolean isAccessToken(StandardUsernamePasswordCredentials credentials) {
+    public static boolean isAPIToken(StandardUsernamePasswordCredentials credentials) {
         String username = credentials.getUsername();
-        return TOKEN_USERNAME.equals(username);
+        return username != null && username.startsWith(API_TOKEN_PREFIX);
     }
 
     /**
-     * Constructor.
+     * Constructor that strips the token prefix from the username.
      * 
-     * @param credentials the username/password credentials where username is TOKEN_USERNAME
+     * @param credentials the username/password credentials where username starts with API_TOKEN_PREFIX
      */
-    public BitbucketAccessTokenAuthenticator(StandardUsernamePasswordCredentials credentials) {
-        super(credentials);
-        this.token = credentials.getPassword();
-    }
-
-    @Override
-    public void configureRequest(HttpRequest request) {
-        request.addHeader("Authorization", "Bearer " + Secret.toString(token));
-    }
-
-    @Override
-    public void configureContext(HttpClientContext context, HttpHost host) {
-         
+    public BitbucketAPITokenAuthenticator(StandardUsernamePasswordCredentials credentials) {
+        super(new PrefixStrippingCredentials(credentials, API_TOKEN_PREFIX));
     }
 }
